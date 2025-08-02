@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>虚拟ICP备案平台</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .video-background {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -100;
+      background-size: cover;
+    }
+    
+    .content-overlay {
+      position: relative;
+      z-index: 1;
+      background-color: transparent;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .main-content {
+      flex: 1;
+    }
+    
+    .panel {
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .footer {
+      background-color: rgba(31, 41, 55, 0.7);
+    }
+    
+    .header {
+      background-color: rgba(29, 78, 216, 0.7);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <video autoplay muted loop class="video-background">
+    <source src="wallpaper.mp4" type="video/mp4">
+    您的浏览器不支持视频背景。
+  </video>
+  
+  <div class="content-overlay">
+    <div id="app" class="flex flex-col min-h-screen">
+      <div class="header text-white py-6 shadow-lg bg-opacity-90">
+        <div class="container mx-auto px-4">
+          <h1 class="text-3xl font-bold flex items-center">
+            <i class="fas fa-globe-asia mr-3"></i>
+            虚拟ICP备案平台
+          </h1>
+          <p class="text-blue-200 mt-1">仅供娱乐使用，非官方备案系统</p>
+        </div>
+      </div>
+
+      <div class="container mx-auto px-4 py-8 main-content">
+        <div class="panel rounded-lg shadow-lg p-6 mb-8">
+          <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+              <h2 class="text-2xl font-bold text-gray-800">网站备案查询</h2>
+              <p class="text-gray-600">输入域名或备案号查询备案信息</p>
+            </div>
+            
+            <a 
+              href="submit.html" 
+              class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition duration-300 flex items-center"
+            >
+              <i class="fas fa-file-alt mr-2"></i>
+              提交备案申请
+            </a>
+          </div>
+          
+          <div class="mt-6 relative">
+            <div class="flex">
+              <input 
+                v-model="searchQuery" 
+                type="text" 
+                placeholder="输入域名或备案号查询" 
+                class="w-full py-3 px-4 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
+              >
+              <button 
+                @click="searchRecords" 
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-r-lg font-medium transition duration-300"
+              >
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 查询结果 -->
+        <div v-if="searchResults.length > 0" class="panel rounded-lg shadow-lg overflow-hidden mb-8">
+          <div class="border-b border-gray-200 p-4 bg-gray-50 bg-opacity-80">
+            <h3 class="text-xl font-semibold text-gray-800">查询结果</h3>
+          </div>
+          
+          <div class="divide-y divide-gray-200">
+            <div v-for="record in searchResults" :key="record.id" class="p-6 hover:bg-gray-50 transition">
+              <div class="flex flex-col md:flex-row md:items-center justify-between">
+                <div>
+                  <div class="flex items-center">
+                    <span class="text-lg font-semibold text-blue-600">{{ record.domain }}</span>
+                    <span class="ml-4 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">已备案</span>
+                  </div>
+                  <p class="text-gray-600 mt-1">{{ record.title }}</p>
+                </div>
+                
+                <div class="mt-4 md:mt-0 text-right">
+                  <div class="text-sm text-gray-500">备案号</div>
+                  <div class="text-lg font-mono text-blue-800">{{ record.record_number }}</div>
+                </div>
+              </div>
+              
+              <div class="mt-4 flex flex-wrap gap-4">
+                <div>
+                  <div class="text-sm text-gray-500">主办单位</div>
+                  <div class="font-medium">{{ record.company }}</div>
+                </div>
+                <div>
+                  <div class="text-sm text-gray-500">备案日期</div>
+                  <div class="font-medium">{{ formatDate(record.created_at) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 备案展示 -->
+        <div v-if="searchResults.length === 0 && searchQuery" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-blue-500">
+            <div class="text-blue-500 text-3xl mb-4">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">什么是网站备案？</h3>
+            <p class="text-gray-600">网站备案是根据国家法律法规，对网站主办者进行真实性核验的过程。本系统为虚拟备案平台，仅供娱乐使用。</p>
+          </div>
+          
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-green-500">
+            <div class="text-green-500 text-3xl mb-4">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">备案流程</h3>
+            <ol class="list-decimal list-inside text-gray-600 space-y-2">
+              <li>填写备案信息</li>
+              <li>提交备案申请</li>
+              <li>获取备案号</li>
+              <li>展示在网站上</li>
+            </ol>
+          </div>
+          
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-purple-500">
+            <div class="text-purple-500 text-3xl mb-4">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">重要说明</h3>
+            <p class="text-gray-600">本平台仅为虚拟备案系统，生成的备案号不具备任何法律效力。实际网站备案请咨询相关管理部门。</p>
+          </div>
+        </div>
+        
+      </div>
+      
+      <footer class="footer text-white py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+          <p>虚拟ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
+          <p class="text-gray-400 text-sm mt-2">本系统与政府机关无关，所有备案信息均为虚拟数据</p>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // 主应用
+    const app = createApp({
+      setup() {
+        const searchQuery = ref('');
+        const searchResults = ref([]);
+        
+        const formatDate = (dateString) => {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+        };
+        
+        const searchRecords = async () => {
+          if (!searchQuery.value.trim()) return;
+          
+          try {
+            const response = await fetch(`http://localhost:3000/api/record?q=${encodeURIComponent(searchQuery.value)}`);
+            const data = await response.json();
+            searchResults.value = data;
+          } catch (error) {
+            console.error('查询错误:', error);
+            alert('查询失败，请稍后再试');
+          }
+        };
+        
+        return { 
+          searchQuery, 
+          searchResults, 
+          formatDate,
+          searchRecords
+        };
+      }
+    });
+    
+    app.mount('#app');
+  </script>
+</body>
+</html>

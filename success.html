@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>虚拟ICP备案平台 - 备案成功</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .video-background {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -100;
+      background-size: cover;
+    }
+    
+    .content-overlay {
+      position: relative;
+      z-index: 1;
+      background-color: transparent;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .main-content {
+      flex: 1;
+    }
+    
+    .panel {
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .footer {
+      background-color: rgba(31, 41, 55, 0.7);
+    }
+    
+    .header {
+      background-color: rgba(29, 78, 216, 0.7);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <video autoplay muted loop class="video-background">
+    <source src="wallpaper.mp4" type="video/mp4">
+    您的浏览器不支持视频背景。
+  </video>
+  
+  <div class="content-overlay">
+    <div id="app" class="flex flex-col min-h-screen">
+      <div class="header text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4">
+          <h1 class="text-3xl font-bold flex items-center">
+            <i class="fas fa-globe-asia mr-3"></i>
+            虚拟ICP备案平台
+          </h1>
+          <p class="text-blue-200 mt-1">仅供娱乐使用，非官方备案系统</p>
+        </div>
+      </div>
+
+      <div class="container mx-auto px-4 py-8 main-content">
+        <div class="panel rounded-lg shadow-lg p-8 mb-8 max-w-3xl mx-auto">
+          <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+              <i class="fas fa-check text-green-500 text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">备案申请已提交成功！</h2>
+            <p class="text-gray-600">您的网站备案信息已成功提交，以下是您的备案详情</p>
+          </div>
+          
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8 bg-opacity-80">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div class="text-sm text-gray-500">网站域名</div>
+                <div class="text-lg font-semibold text-blue-800">{{ recordData.domain }}</div>
+              </div>
+              
+              <div>
+                <div class="text-sm text-gray-500">网站标题</div>
+                <div class="text-lg font-semibold">{{ recordData.title }}</div>
+              </div>
+              
+              <div>
+                <div class="text-sm text-gray-500">主办单位</div>
+                <div class="text-lg font-semibold">{{ recordData.company }}</div>
+              </div>
+              
+              <div>
+                <div class="text-sm text-gray-500">备案号</div>
+                <div class="text-2xl font-bold text-blue-700 font-mono">{{ recordData.recordNumber }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 bg-opacity-80">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-yellow-500 text-xl"></i>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">重要提示</h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                  <p>• 本备案平台为虚拟系统，仅供娱乐使用</p>
+                  <p>• 生成的备案号不具备任何法律效力</p>
+                  <p>• 实际网站备案请咨询相关管理部门</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex justify-center mt-8">
+            <a 
+              href="index.html" 
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-300 flex items-center"
+            >
+              <i class="fas fa-home mr-2"></i>
+              返回首页
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <footer class="footer text-white py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+          <p>虚拟ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
+          <p class="text-gray-400 text-sm mt-2">本系统与政府机关无关，所有备案信息均为虚拟数据</p>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted } = Vue;
+    
+    // 主应用
+    const app = createApp({
+      setup() {
+        const recordData = ref({});
+        
+        onMounted(() => {
+          // 从localStorage获取备案数据
+          const data = localStorage.getItem('recordData');
+          if (data) {
+            recordData.value = JSON.parse(data);
+          }
+        });
+        
+        return { recordData };
+      }
+    });
+    
+    app.mount('#app');
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# 依赖目录
+node_modules/
+
+# 环境变量文件
+.env
+
+# 日志文件
+*.log
+
+# 编辑器配置
+.vscode/
+*.swp
+*.swo
