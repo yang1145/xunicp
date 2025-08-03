@@ -277,8 +277,16 @@
             verificationError.value = '';
             verificationStatus.value = null;
             
-            // 调用后端代理API验证DNS TXT记录
-            const response = await fetch(`/api/dns-query?type=TXT&domain=_acme-challenge.${form.value.domain}`);
+            // 调用后端代理API验证DNS TXT记录，添加时间戳确保不使用缓存
+            const timestamp = Date.now();
+            const response = await fetch(`/api/dns-query?type=TXT&domain=_acme-challenge.${form.value.domain}&t=${timestamp}`, {
+              cache: 'no-store',
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              }
+            });
             const data = await response.json();
             
             // 调试信息，帮助了解API返回的数据格式
@@ -295,7 +303,7 @@
             
             // 即使状态码不是200，也要检查是否有有效的target数据
             if (data.code == 200 || data.code === "200" || data.code === 0 || data.success === true || 
-                (data.code == 500 && data.target)) {
+                (data.code == 500 && data.target) || data.target) {
               // 成功查询DNS记录或有返回数据
               let found = false;
               
@@ -330,7 +338,7 @@
                       break;
                     }
                   }
-                } else if (typeof target === 'object') {
+                } else if (typeof target === 'object' && target !== null) {
                   // 处理对象形式的返回结果
                   console.log('对象格式记录:', target); // 调试信息
                   const cleanVerificationCode = verificationCode.value.trim();

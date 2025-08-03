@@ -152,12 +152,15 @@ app.get('/api/dns-query', (req, res) => {
   }
   
   // 构建API请求URL
-  const apiUrl = `https://uapis.cn/api/dnsresolve?type=${encodeURIComponent(type)}&domain=${encodeURIComponent(domain)}`;
+  const apiUrl = `https://uapis.cn/api/dnsresolve?type=${encodeURIComponent(type)}&domain=${encodeURIComponent(domain)}&t=${Date.now()}`;
   
   // 设置请求选项，增加超时
   const options = {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; DNS-Validator/1.0)'
+      'User-Agent': 'Mozilla/5.0 (compatible; DNS-Validator/1.0)',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     },
     timeout: 10000 // 10秒超时
   };
@@ -173,6 +176,12 @@ app.get('/api/dns-query', (req, res) => {
     
     // 请求完成
     apiResponse.on('end', () => {
+      // 检查响应是否已经发送
+      if (res.headersSent) {
+        console.log('响应已发送，跳过处理');
+        return;
+      }
+      
       try {
         const jsonData = JSON.parse(data);
         console.log('DNS API原始返回数据:', jsonData); // 调试信息
@@ -181,18 +190,45 @@ app.get('/api/dns-query', (req, res) => {
         // 即使API返回500状态码，也要检查是否有有效的数据
         const hasValidData = jsonData.target || jsonData.data || jsonData.records || jsonData.result;
         
+        // 更好地处理各种可能的返回格式
+        let targetData = null;
+        if (jsonData.target !== undefined) {
+          targetData = jsonData.target;
+        } else if (jsonData.data !== undefined) {
+          targetData = jsonData.data;
+        } else if (jsonData.records !== undefined) {
+          targetData = jsonData.records;
+        } else if (jsonData.result !== undefined) {
+          targetData = jsonData.result;
+        }
+        
         const result = {
           code: jsonData.code || jsonData.status || (jsonData.success ? 200 : (hasValidData ? 200 : 500)),
-          target: jsonData.target || jsonData.data || jsonData.records || jsonData.result || null,
+          target: targetData,
           msg: jsonData.msg || jsonData.message || jsonData.error || jsonData.reason || null,
           success: jsonData.success || jsonData.code == 200 || jsonData.status == 200 || !!hasValidData
         };
         
         console.log('标准化后的返回数据:', result); // 调试信息
+        res.set({
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        });
         res.json(result);
       } catch (error) {
+        // 检查响应是否已经发送
+        if (res.headersSent) {
+          console.log('响应已发送，跳过错误处理');
+          return;
+        }
+        
         console.error('DNS API响应解析错误:', error, '原始数据:', data);
-        res.status(500).json({ 
+        res.status(500).set({
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }).json({ 
           code: 500,
           error: '解析API响应失败', 
           details: error.message 
@@ -200,9 +236,21 @@ app.get('/api/dns-query', (req, res) => {
       }
     });
   }).on('error', (error) => {
+    // 检查响应是否已经发送
+    if (res.headersSent) {
+      console.log('响应已发送，跳过网络错误处理');
+      return;
+    }
+    
     console.error('DNS查询网络错误:', error);
     res.status(500).json({ error: 'DNS查询失败', details: error.message });
   }).on('timeout', () => {
+    // 检查响应是否已经发送
+    if (res.headersSent) {
+      console.log('响应已发送，跳过超时处理');
+      return;
+    }
+    
     apiRequest.destroy();
     res.status(500).json({ error: 'DNS查询超时' });
   });
