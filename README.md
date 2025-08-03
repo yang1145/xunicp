@@ -8,6 +8,8 @@
 - `index.html` - 主页，包含备案查询功能
 - `submit.html` - 备案申请页面
 - `success.html` - 备案成功页面
+- `query.html` - 备案详细信息查询页面
+- `admin.html` - 管理员后台页面
 - `sql.sql` - 数据库表结构
 - `wallpaper.mp4` - 页面背景视频
 
@@ -49,6 +51,15 @@
    ```bash
    npm run dev
    ```
+
+### 打包项目
+
+使用以下命令可以将项目打包为zip文件：
+```bash
+npm run pack
+```
+
+这将创建一个xunicp-release.zip文件，其中包含所有必要的文件，排除了node_modules、日志文件、环境变量文件等不需要打包的内容。
 
 ### 环境变量配置
 
@@ -99,11 +110,3 @@
   - `company` - 公司名称
 
 ### 查询备案
-- URL: `/api/record?q=查询内容`
-- 方法: GET
-- 参数:
-  - `q` - 查询关键词（域名或备案号）
-
-## 许可证
-
-MIT

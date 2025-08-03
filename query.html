@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>备案信息查询 - 梦ICP备案平台</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .video-background {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -100;
+      background-size: cover;
+    }
+    
+    .content-overlay {
+      position: relative;
+      z-index: 1;
+      background-color: transparent;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .main-content {
+      flex: 1;
+    }
+    
+    .panel {
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .footer {
+      background-color: rgba(31, 41, 55, 0.7);
+    }
+    
+    .header {
+      background-color: rgba(29, 78, 216, 0.7);
+    }
+    
+    /* 移动端不显示视频背景 */
+    @media (max-width: 768px) {
+      .video-background {
+        display: none;
+      }
+      
+      .content-overlay {
+        background-color: #f3f4f6;
+      }
+      
+      .panel {
+        background-color: rgba(255, 255, 255, 1);
+      }
+      
+      .header {
+        background-color: rgba(29, 78, 216, 1);
+      }
+      
+      .footer {
+        background-color: rgba(31, 41, 55, 1);
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <video autoplay muted loop class="video-background">
+    <source src="wallpaper.mp4" type="video/mp4">
+    您的浏览器不支持视频背景。
+  </video>
+  
+  <div class="content-overlay">
+    <div id="app" class="flex flex-col min-h-screen">
+      <div class="header text-white py-6 shadow-lg bg-opacity-90">
+        <div class="container mx-auto px-4">
+          <h1 class="text-3xl font-bold flex items-center">
+            <i class="fas fa-globe-asia mr-3"></i>
+            梦ICP备案平台
+          </h1>
+          <p class="text-blue-200 mt-1">仅供娱乐使用，非官方备案系统</p>
+        </div>
+      </div>
+
+      <div class="container mx-auto px-4 py-8 main-content">
+        <div class="panel rounded-lg shadow-lg p-6 mb-8">
+          <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+              <h2 class="text-2xl font-bold text-gray-800">备案信息查询</h2>
+              <p class="text-gray-600">通过备案号直接查询备案信息</p>
+            </div>
+            
+            <a 
+              href="index.html" 
+              class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition duration-300 flex items-center"
+            >
+              <i class="fas fa-search mr-2"></i>
+              首页查询
+            </a>
+          </div>
+          
+          <div v-if="loading" class="mt-6 text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
+            <p class="mt-2 text-gray-600">正在查询备案信息...</p>
+          </div>
+          
+          <div v-else-if="error" class="mt-6 text-center py-8">
+            <i class="fas fa-exclamation-circle text-3xl text-red-500"></i>
+            <p class="mt-2 text-red-500">{{ error }}</p>
+            <a href="index.html" class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+              返回首页
+            </a>
+          </div>
+          
+          <div v-else-if="record" class="mt-6">
+            <div class="border-b border-gray-200 p-4 bg-gray-50 bg-opacity-80">
+              <h3 class="text-xl font-semibold text-gray-800">备案信息详情</h3>
+            </div>
+            
+            <div class="p-6">
+              <div class="flex flex-col md:flex-row md:items-center justify-between">
+                <div>
+                  <div class="flex items-center">
+                    <span class="text-lg font-semibold text-blue-600">{{ record.domain }}</span>
+                    <span class="ml-4 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">已备案</span>
+                  </div>
+                  <p class="text-gray-600 mt-1">{{ record.title }}</p>
+                </div>
+                
+                <div class="mt-4 md:mt-0 text-right">
+                  <div class="text-sm text-gray-500">备案号</div>
+                  <div class="text-lg font-mono text-blue-800">{{ record.record_number }}</div>
+                </div>
+              </div>
+              
+              <div class="mt-6 flex flex-wrap gap-6">
+                <div>
+                  <div class="text-sm text-gray-500">主办单位</div>
+                  <div class="font-medium">{{ record.company }}</div>
+                </div>
+                <div>
+                  <div class="text-sm text-gray-500">备案日期</div>
+                  <div class="font-medium">{{ formatDate(record.created_at) }}</div>
+                </div>
+              </div>
+              
+              <div class="mt-8 pt-6 border-t border-gray-200">
+                <a href="index.html" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                  <i class="fas fa-arrow-left mr-2"></i>
+                  返回首页继续查询
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else-if="noRecord && !loading" class="mt-6 text-center py-8">
+            <i class="fas fa-info-circle text-3xl text-yellow-500"></i>
+            <p class="mt-2 text-gray-600">未找到相关备案信息</p>
+            <a href="index.html" class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+              返回首页
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <footer class="footer text-white py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+          <p>梦ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
+          <p class="text-gray-400 text-sm mt-2">本系统与政府机关无关，所有备案信息均为虚拟数据</p>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // 主应用
+    const { createApp, ref, onMounted } = Vue;
+    
+    const app = createApp({
+      setup() {
+        const record = ref(null);
+        const loading = ref(true);
+        const error = ref('');
+        const noRecord = ref(false);
+        
+        const formatDate = (dateString) => {
+          if (!dateString) return '';
+          const date = new Date(dateString);
+          return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+        };
+        
+        // 获取URL中的查询参数（支持 /query.html?备案号值 格式）
+        const getQueryParameter = () => {
+          const url = window.location.href;
+          const queryString = window.location.search;
+          
+          // 如果有查询字符串，则去掉?号获取备案号
+          if (queryString) {
+            return queryString.substring(1);
+          }
+          
+          // 如果没有查询字符串，尝试从路径中获取
+          const parts = url.split('/');
+          const fileName = parts[parts.length - 1];
+          const paramStart = fileName.indexOf('?');
+          
+          if (paramStart !== -1) {
+            return fileName.substring(paramStart + 1);
+          }
+          
+          return null;
+        };
+        
+        const searchRecordByNumber = async () => {
+          const recordNumber = getQueryParameter();
+          
+          if (!recordNumber) {
+            loading.value = false;
+            error.value = 'URL中未包含备案号参数';
+            return;
+          }
+          
+          try {
+            loading.value = true;
+            const response = await fetch(`/api/record?q=${encodeURIComponent(recordNumber)}`);
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (data.length > 0) {
+              record.value = data[0];
+            } else {
+              noRecord.value = true;
+            }
+          } catch (error) {
+            console.error('查询错误:', error);
+            error.value = '查询失败，请稍后再试';
+          } finally {
+            loading.value = false;
+          }
+        };
+        
+        onMounted(() => {
+          searchRecordByNumber();
+        });
+        
+        return { 
+          record,
+          loading,
+          error,
+          noRecord,
+          formatDate
+        };
+      }
+    });
+    
+    app.mount('#app');
+  </script>
+</body>
+</html>

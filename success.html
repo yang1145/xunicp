@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>虚拟ICP备案平台 - 备案成功</title>
+  <title>梦ICP备案平台 - 备案成功</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -44,6 +44,45 @@
     .header {
       background-color: rgba(29, 78, 216, 0.7);
     }
+    
+    /* 移动端不显示视频背景 */
+    @media (max-width: 768px) {
+      .video-background {
+        display: none;
+      }
+      
+      .content-overlay {
+        background-color: #f3f4f6;
+      }
+      
+      .panel {
+        background-color: rgba(255, 255, 255, 1);
+      }
+      
+      .header {
+        background-color: rgba(29, 78, 216, 1);
+      }
+      
+      .footer {
+        background-color: rgba(31, 41, 55, 1);
+      }
+    }
+    
+    .code-block {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    
+    .copy-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -54,81 +93,145 @@
   
   <div class="content-overlay">
     <div id="app" class="flex flex-col min-h-screen">
-      <div class="header text-white py-6 shadow-lg">
+      <div class="header text-white py-6 shadow-lg bg-opacity-90">
         <div class="container mx-auto px-4">
           <h1 class="text-3xl font-bold flex items-center">
             <i class="fas fa-globe-asia mr-3"></i>
-            虚拟ICP备案平台
+            梦ICP备案平台
           </h1>
           <p class="text-blue-200 mt-1">仅供娱乐使用，非官方备案系统</p>
         </div>
       </div>
 
       <div class="container mx-auto px-4 py-8 main-content">
-        <div class="panel rounded-lg shadow-lg p-8 mb-8 max-w-3xl mx-auto">
-          <div class="text-center mb-6">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-              <i class="fas fa-check text-green-500 text-3xl"></i>
+        <div class="panel rounded-lg shadow-lg p-6 mb-8 max-w-2xl mx-auto">
+          <div class="text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i class="fas fa-check text-3xl text-green-600"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">备案申请已提交成功！</h2>
-            <p class="text-gray-600">您的网站备案信息已成功提交，以下是您的备案详情</p>
-          </div>
-          
-          <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8 bg-opacity-80">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <div class="text-sm text-gray-500">网站域名</div>
-                <div class="text-lg font-semibold text-blue-800">{{ recordData.domain }}</div>
+            
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">备案申请提交成功！</h2>
+            <p class="text-gray-600 mb-8">您的备案信息已成功提交并生成备案号</p>
+            
+            <div class="bg-gray-50 rounded-lg p-6 mb-8 text-left">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">备案信息</h3>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">已备案</span>
               </div>
               
-              <div>
-                <div class="text-sm text-gray-500">网站标题</div>
-                <div class="text-lg font-semibold">{{ recordData.title }}</div>
-              </div>
-              
-              <div>
-                <div class="text-sm text-gray-500">主办单位</div>
-                <div class="text-lg font-semibold">{{ recordData.company }}</div>
-              </div>
-              
-              <div>
-                <div class="text-sm text-gray-500">备案号</div>
-                <div class="text-2xl font-bold text-blue-700 font-mono">{{ recordData.recordNumber }}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 bg-opacity-80">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                <i class="fas fa-exclamation-circle text-yellow-500 text-xl"></i>
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-yellow-800">重要提示</h3>
-                <div class="mt-2 text-sm text-yellow-700">
-                  <p>• 本备案平台为虚拟系统，仅供娱乐使用</p>
-                  <p>• 生成的备案号不具备任何法律效力</p>
-                  <p>• 实际网站备案请咨询相关管理部门</p>
+              <div class="space-y-4">
+                <div class="flex">
+                  <div class="w-24 text-gray-500">网站域名:</div>
+                  <div class="font-medium">{{ domain }}</div>
+                </div>
+                
+                <div class="flex">
+                  <div class="w-24 text-gray-500">备案号:</div>
+                  <div class="font-mono text-blue-600 font-medium">梦ICP - {{ recordNumber }}</div>
+                </div>
+                
+                <div class="flex">
+                  <div class="w-24 text-gray-500">网站名称:</div>
+                  <div class="font-medium">{{ title }}</div>
+                </div>
+                
+                <div class="flex">
+                  <div class="w-24 text-gray-500">主办单位:</div>
+                  <div class="font-medium">{{ company }}</div>
                 </div>
               </div>
             </div>
+            
+            <!-- ICP悬挂代码区域 -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-8 text-left">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">ICP信息悬挂代码</h3>
+              <p class="text-gray-600 text-sm mb-4">您可以将以下代码添加到网站的底部以悬挂ICP备案信息：</p>
+              
+              <div class="relative">
+                <div class="code-block relative">
+                  <button 
+                    @click="copyCode" 
+                    :disabled="codeCopied"
+                    class="copy-button bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm"
+                  >
+                    {{ codeCopied ? '已复制' : '复制' }}
+                  </button>
+                  <pre class="whitespace-pre-wrap">&lt;div style="text-align: center; padding: 20px; font-size: 14px;"&gt;
+  &lt;p&gt;备案号：&lt;a href="https://cqkj-beian.lnhyun.com/query.html?{{ recordNumber }}" target="_blank"&gt;梦ICP - {{ recordNumber }}&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;版权所有 © {{ new Date().getFullYear() }} {{ company }}&lt;/p&gt;
+&lt;/div&gt;</pre>
+                </div>
+              </div>
+              
+              <div class="mt-4 text-sm text-gray-600">
+                <p><i class="fas fa-info-circle mr-2"></i>使用说明：</p>
+                <ul class="list-disc list-inside mt-2 text-left pl-4 space-y-1">
+                  <li>将上述代码复制到您的网站首页或所有页面的底部</li>
+                  <li>点击"复制"按钮可一键复制代码</li>
+                  <li>备案号链接到本平台的备案查询页面</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <button 
+                @click="copyRecordNumber" 
+                :disabled="copied"
+                class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition duration-300 flex items-center justify-center"
+              >
+                <i :class="copied ? 'fas fa-check' : 'fas fa-copy'"></i>
+                <span class="ml-2">{{ copied ? '已复制' : '复制备案号' }}</span>
+              </button>
+              
+              <a 
+                href="index.html" 
+                class="bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-lg font-medium transition duration-300 flex items-center justify-center"
+              >
+                <i class="fas fa-home mr-2"></i>
+                返回首页
+              </a>
+              
+              <a 
+                :href="`query.html?${recordNumber}`"
+                class="bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-medium transition duration-300 flex items-center justify-center"
+              >
+                <i class="fas fa-search mr-2"></i>
+                查看详情
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-blue-500">
+            <div class="text-blue-500 text-3xl mb-4">
+              <i class="fas fa-sync-alt"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">备案更新</h3>
+            <p class="text-gray-600">备案信息如有变更，请及时更新备案信息以确保准确性。</p>
           </div>
           
-          <div class="flex justify-center mt-8">
-            <a 
-              href="index.html" 
-              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-300 flex items-center"
-            >
-              <i class="fas fa-home mr-2"></i>
-              返回首页
-            </a>
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-green-500">
+            <div class="text-green-500 text-3xl mb-4">
+              <i class="fas fa-globe"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">展示要求</h3>
+            <p class="text-gray-600">根据规定，备案号需要在网站首页底部显著位置展示。</p>
+          </div>
+          
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-purple-500">
+            <div class="text-purple-500 text-3xl mb-4">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">备案验证</h3>
+            <p class="text-gray-600">可通过备案号在首页查询功能中验证备案信息的真实性。</p>
           </div>
         </div>
       </div>
       
       <footer class="footer text-white py-8 mt-auto">
         <div class="container mx-auto px-4 text-center">
-          <p>虚拟ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
+          <p>梦ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
           <p class="text-gray-400 text-sm mt-2">本系统与政府机关无关，所有备案信息均为虚拟数据</p>
         </div>
       </footer>
@@ -136,22 +239,75 @@
   </div>
 
   <script>
+    // 主应用
     const { createApp, ref, onMounted } = Vue;
     
-    // 主应用
     const app = createApp({
       setup() {
-        const recordData = ref({});
+        const recordNumber = ref('');
+        const domain = ref('');
+        const title = ref('');
+        const company = ref('');
+        const copied = ref(false);
+        const codeCopied = ref(false);
+        
+        const getParameterByName = (name, url) => {
+          if (!url) url = window.location.href;
+          name = name.replace(/[\[\]]/g, '\\$&');
+          const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+              results = regex.exec(url);
+          if (!results) return null;
+          if (!results[2]) return '';
+          return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        };
+        
+        const copyRecordNumber = async () => {
+          try {
+            await navigator.clipboard.writeText(`梦ICP - ${recordNumber.value}`);
+            copied.value = true;
+            setTimeout(() => {
+              copied.value = false;
+            }, 2000);
+          } catch (err) {
+            console.error('复制失败:', err);
+            alert('复制失败，请手动复制备案号');
+          }
+        };
+        
+        const copyCode = async () => {
+          try {
+            const code = `<div style="text-align: center; padding: 20px; font-size: 14px;">
+  <p>备案号：<a href="https://cqkj-beian.lnhyun.com/query.html?${recordNumber.value}" target="_blank">梦ICP - ${recordNumber.value}</a></p>
+  <p>版权所有 © ${new Date().getFullYear()} ${company.value}</p>
+</div>`;
+            await navigator.clipboard.writeText(code);
+            codeCopied.value = true;
+            setTimeout(() => {
+              codeCopied.value = false;
+            }, 2000);
+          } catch (err) {
+            console.error('复制失败:', err);
+            alert('复制失败，请手动复制代码');
+          }
+        };
         
         onMounted(() => {
-          // 从localStorage获取备案数据
-          const data = localStorage.getItem('recordData');
-          if (data) {
-            recordData.value = JSON.parse(data);
-          }
+          recordNumber.value = getParameterByName('record') || '未提供';
+          domain.value = getParameterByName('domain') || '未提供';
+          title.value = getParameterByName('title') || '示例网站';
+          company.value = getParameterByName('company') || '示例公司';
         });
         
-        return { recordData };
+        return { 
+          recordNumber,
+          domain,
+          title,
+          company,
+          copied,
+          codeCopied,
+          copyRecordNumber,
+          copyCode
+        };
       }
     });
     

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>梦ICP备案平台 - 管理员面板</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .video-background {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -100;
+      background-size: cover;
+    }
+    
+    .content-overlay {
+      position: relative;
+      z-index: 1;
+      background-color: transparent;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .main-content {
+      flex: 1;
+    }
+    
+    .panel {
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .footer {
+      background-color: rgba(31, 41, 55, 0.7);
+    }
+    
+    .header {
+      background-color: rgba(29, 78, 216, 0.7);
+    }
+    
+    /* 移动端不显示视频背景 */
+    @media (max-width: 768px) {
+      .video-background {
+        display: none;
+      }
+      
+      .content-overlay {
+        background-color: #f3f4f6;
+      }
+      
+      .panel {
+        background-color: rgba(255, 255, 255, 1);
+      }
+      
+      .header {
+        background-color: rgba(29, 78, 216, 1);
+      }
+      
+      .footer {
+        background-color: rgba(31, 41, 55, 1);
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <video autoplay muted loop class="video-background">
+    <source src="wallpaper.mp4" type="video/mp4">
+    您的浏览器不支持视频背景。
+  </video>
+  
+  <div class="content-overlay">
+    <div id="app" class="flex flex-col min-h-screen">
+      <div class="header text-white py-6 shadow-lg bg-opacity-90">
+        <div class="container mx-auto px-4">
+          <h1 class="text-3xl font-bold flex items-center">
+            <i class="fas fa-globe-asia mr-3"></i>
+            梦ICP备案平台 - 管理员面板
+          </h1>
+          <p class="text-blue-200 mt-1">备案信息管理</p>
+        </div>
+      </div>
+
+      <div class="container mx-auto px-4 py-8 main-content">
+        <!-- 登录表单 -->
+        <div v-if="!isLoggedIn" class="panel rounded-lg shadow-lg p-6 mb-8 max-w-md mx-auto">
+          <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">管理员登录</h2>
+            <p class="text-gray-600 mt-2">请输入管理员账号和密码</p>
+          </div>
+          
+          <form @submit.prevent="login" class="space-y-6">
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">用户名</label>
+              <input 
+                v-model="loginForm.username" 
+                type="text" 
+                required
+                placeholder="请输入用户名"
+                class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
+              >
+            </div>
+            
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">密码</label>
+              <input 
+                v-model="loginForm.password" 
+                type="password" 
+                required
+                placeholder="请输入密码"
+                class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
+              >
+            </div>
+            
+            <div v-if="loginError" class="text-red-500 text-sm">
+              {{ loginError }}
+            </div>
+            
+            <div>
+              <button 
+                type="submit" 
+                :disabled="loggingIn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300 flex items-center justify-center"
+              >
+                <i :class="loggingIn ? 'fas fa-spinner fa-spin' : 'fas fa-sign-in-alt'"></i>
+                <span class="ml-2">{{ loggingIn ? '登录中...' : '登录' }}</span>
+              </button>
+            </div>
+          </form>
+          
+          
+        </div>
+        
+        <!-- 管理面板 -->
+        <div v-else class="panel rounded-lg shadow-lg p-6 mb-8">
+          <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+              <h2 class="text-2xl font-bold text-gray-800">备案信息管理</h2>
+              <p class="text-gray-600">管理所有备案记录</p>
+            </div>
+            
+            <div class="flex space-x-4">
+              <button 
+                @click="loadRecords"
+                :disabled="loading"
+                class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition duration-300 flex items-center"
+              >
+                <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-sync'"></i>
+                <span class="ml-2">{{ loading ? '刷新中...' : '刷新列表' }}</span>
+              </button>
+              
+              <button 
+                @click="logout"
+                class="bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-lg font-medium transition duration-300 flex items-center"
+              >
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                退出登录
+              </button>
+            </div>
+          </div>
+          
+          <div v-if="loading && records.length === 0" class="mt-6 text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
+            <p class="mt-2 text-gray-600">正在加载备案记录...</p>
+          </div>
+          
+          <div v-else-if="error" class="mt-6 text-center py-8">
+            <i class="fas fa-exclamation-circle text-3xl text-red-500"></i>
+            <p class="mt-2 text-red-500">{{ error }}</p>
+          </div>
+          
+          <div v-else>
+            <div class="mt-6 overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50 bg-opacity-80">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">域名</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">网站名称</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主办单位</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备案号</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备案日期</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white bg-opacity-80 divide-y divide-gray-200">
+                  <tr v-for="record in records" :key="record.id">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ record.domain }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.title }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.company }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-blue-600">{{ record.record_number }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatDate(record.created_at) }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <button 
+                        @click="deleteRecord(record.id)"
+                        :disabled="deletingId === record.id"
+                        class="text-red-600 hover:text-red-900 disabled:opacity-50"
+                      >
+                        <i :class="deletingId === record.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'"></i>
+                        {{ deletingId === record.id ? '删除中...' : '删除' }}
+                      </button>
+                    </td>
+                  </tr>
+                  
+                  <tr v-if="records.length === 0">
+                    <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                      暂无备案记录
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="mt-4 text-sm text-gray-600">
+              <p>共 {{ records.length }} 条备案记录</p>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="isLoggedIn" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-blue-500">
+            <div class="text-blue-500 text-3xl mb-4">
+              <i class="fas fa-database"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">数据管理</h3>
+            <p class="text-gray-600">管理员可以查看和删除所有备案记录，确保数据的准确性和完整性。</p>
+          </div>
+          
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-green-500">
+            <div class="text-green-500 text-3xl mb-4">
+              <i class="fas fa-sync-alt"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">实时刷新</h3>
+            <p class="text-gray-600">通过刷新按钮可以获取最新的备案信息，确保管理操作的实时性。</p>
+          </div>
+          
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-purple-500">
+            <div class="text-purple-500 text-3xl mb-4">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">谨慎操作</h3>
+            <p class="text-gray-600">删除操作不可逆，请在删除前确认备案信息，避免误删重要数据。</p>
+          </div>
+        </div>
+      </div>
+      
+      <footer class="footer text-white py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+          <p>梦ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
+          <p class="text-gray-400 text-sm mt-2">本系统与政府机关无关，所有备案信息均为虚拟数据</p>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // 主应用
+    const { createApp, ref, onMounted } = Vue;
+    
+    const app = createApp({
+      setup() {
+        const isLoggedIn = ref(false);
+        const loginForm = ref({
+          username: '',
+          password: ''
+        });
+        const loggingIn = ref(false);
+        const loginError = ref('');
+        
+        const records = ref([]);
+        const loading = ref(false);
+        const deletingId = ref(null);
+        const error = ref('');
+        
+        // 检查本地存储中是否有有效的token
+        const checkLoginStatus = () => {
+          const token = localStorage.getItem('adminToken');
+          if (token) {
+            isLoggedIn.value = true;
+            loadRecords();
+          }
+        };
+        
+        const formatDate = (dateString) => {
+          if (!dateString) return '';
+          const date = new Date(dateString);
+          return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+        };
+        
+        const login = async () => {
+          try {
+            loggingIn.value = true;
+            loginError.value = '';
+            
+            const response = await fetch('/api/admin/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(loginForm.value)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              // 保存token到本地存储
+              localStorage.setItem('adminToken', data.token);
+              isLoggedIn.value = true;
+              loginForm.value.username = '';
+              loginForm.value.password = '';
+              loadRecords();
+            } else {
+              loginError.value = data.error;
+            }
+          } catch (err) {
+            console.error('登录错误:', err);
+            loginError.value = '登录失败，请稍后再试';
+          } finally {
+            loggingIn.value = false;
+          }
+        };
+        
+        const logout = () => {
+          localStorage.removeItem('adminToken');
+          isLoggedIn.value = false;
+          records.value = [];
+        };
+        
+        const loadRecords = async () => {
+          try {
+            loading.value = true;
+            error.value = '';
+            
+            const token = localStorage.getItem('adminToken');
+            const response = await fetch('/api/records', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (response.status === 401) {
+              logout();
+              return;
+            }
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            records.value = data;
+          } catch (err) {
+            console.error('加载记录错误:', err);
+            error.value = '加载备案记录失败，请稍后再试';
+          } finally {
+            loading.value = false;
+          }
+        };
+        
+        const deleteRecord = async (id) => {
+          if (!confirm('确定要删除这条备案记录吗？此操作不可恢复。')) {
+            return;
+          }
+          
+          try {
+            deletingId.value = id;
+            
+            const token = localStorage.getItem('adminToken');
+            const response = await fetch(`/api/record/${id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (response.status === 401) {
+              logout();
+              alert('登录已过期，请重新登录');
+              return;
+            }
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            
+            // 从列表中移除已删除的记录
+            records.value = records.value.filter(record => record.id !== id);
+            
+            alert('备案记录已成功删除');
+          } catch (err) {
+            console.error('删除记录错误:', err);
+            alert(`删除失败: ${err.message}`);
+          } finally {
+            deletingId.value = null;
+          }
+        };
+        
+        onMounted(() => {
+          checkLoginStatus();
+        });
+        
+        return { 
+          isLoggedIn,
+          loginForm,
+          loggingIn,
+          loginError,
+          records,
+          loading,
+          deletingId,
+          error,
+          formatDate,
+          login,
+          logout,
+          loadRecords,
+          deleteRecord
+        };
+      }
+    });
+    
+    app.mount('#app');
+  </script>
+</body>
+</html>

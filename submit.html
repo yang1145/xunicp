@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>虚拟ICP备案平台 - 提交备案申请</title>
+  <title>梦ICP备案平台 - 提交备案申请</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -44,6 +44,29 @@
     .header {
       background-color: rgba(29, 78, 216, 0.7);
     }
+    
+    /* 移动端不显示视频背景 */
+    @media (max-width: 768px) {
+      .video-background {
+        display: none;
+      }
+      
+      .content-overlay {
+        background-color: #f3f4f6;
+      }
+      
+      .panel {
+        background-color: rgba(255, 255, 255, 1);
+      }
+      
+      .header {
+        background-color: rgba(29, 78, 216, 1);
+      }
+      
+      .footer {
+        background-color: rgba(31, 41, 55, 1);
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -54,11 +77,11 @@
   
   <div class="content-overlay">
     <div id="app" class="flex flex-col min-h-screen">
-      <div class="header text-white py-6 shadow-lg">
+      <div class="header text-white py-6 shadow-lg bg-opacity-90">
         <div class="container mx-auto px-4">
           <h1 class="text-3xl font-bold flex items-center">
             <i class="fas fa-globe-asia mr-3"></i>
-            虚拟ICP备案平台
+            梦ICP备案平台
           </h1>
           <p class="text-blue-200 mt-1">仅供娱乐使用，非官方备案系统</p>
         </div>
@@ -67,72 +90,140 @@
       <div class="container mx-auto px-4 py-8 main-content">
         <div class="panel rounded-lg shadow-lg p-6 mb-8">
           <div class="border-b border-gray-200 pb-4 mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">网站备案申请</h2>
-            <p class="text-gray-600">请填写以下信息进行网站备案</p>
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+              <i class="fas fa-file-alt mr-3 text-blue-600"></i>
+              提交备案申请
+            </h2>
+            <p class="text-gray-600 mt-1">请填写以下信息以提交备案申请</p>
           </div>
           
-          <form @submit.prevent="submitRecord">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label class="block text-gray-700 font-medium mb-2" for="domain">网站域名</label>
-                <input 
-                  v-model="domain" 
-                  type="text" 
-                  id="domain" 
-                  placeholder="例如：example.com" 
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
-                >
+          <form @submit.prevent="submitRecord" class="space-y-6">
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">网站域名</label>
+              <input 
+                v-model="form.domain" 
+                type="text" 
+                required
+                placeholder="例如: example.com"
+                class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
+              >
+              <p class="mt-1 text-sm text-gray-500">请输入完整的网站域名</p>
+            </div>
+            
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">网站名称</label>
+              <input 
+                v-model="form.title" 
+                type="text" 
+                required
+                placeholder="例如: 示例网站"
+                class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
+              >
+              <p class="mt-1 text-sm text-gray-500">请输入网站的显示名称</p>
+            </div>
+            
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">主办单位</label>
+              <input 
+                v-model="form.company" 
+                type="text" 
+                required
+                placeholder="例如: 示例公司"
+                class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
+              >
+              <p class="mt-1 text-sm text-gray-500">请输入网站主办单位或个人姓名</p>
+            </div>
+            
+            <div v-if="verificationCode">
+              <label class="block text-gray-700 font-medium mb-2">DNS验证</label>
+              <div class="panel bg-blue-50 p-4 rounded-lg mb-4">
+                <p class="text-gray-700 mb-2">请在您的域名 <strong>{{ form.domain }}</strong> 下添加以下TXT记录：</p>
+                <div class="bg-gray-800 text-green-400 p-3 rounded font-mono text-sm mb-2 overflow-x-auto">
+                  类型：TXT<br>
+                  主机：_acme-challenge<br>
+                  内容：{{ verificationCode }}<br>
+                  TTL：600
+                </div>
+                <p class="text-gray-600 text-sm">添加完成后，请点击下方的"验证DNS记录"按钮。<br>
+                注意：DNS记录生效可能需要几分钟时间，请耐心等待。</p>
               </div>
               
-              <div>
-                <label class="block text-gray-700 font-medium mb-2" for="title">网站标题</label>
-                <input 
-                  v-model="title" 
-                  type="text" 
-                  id="title" 
-                  placeholder="例如：我的个人网站" 
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
-                >
+              <div v-if="verificationError" class="text-red-500 mb-2">
+                {{ verificationError }}
               </div>
               
-              <div class="md:col-span-2">
-                <label class="block text-gray-700 font-medium mb-2" for="company">主办单位名称</label>
+              <div class="flex space-x-2">
                 <input 
-                  v-model="company" 
+                  v-model="dnsInput"
                   type="text" 
-                  id="company" 
-                  placeholder="例如：张三的个人网站" 
-                  required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
+                  placeholder="此字段已弃用，直接点击验证按钮即可"
+                  class="flex-1 py-3 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
+                  :disabled="isVerifying || isVerified"
+                  style="display: none;"
                 >
+                <button 
+                  type="button"
+                  @click="verifyDNS"
+                  :disabled="isVerifying || isVerified"
+                  class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300 flex items-center"
+                >
+                  <i :class="isVerifying ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
+                  <span v-if="isVerifying" class="ml-2">验证中...</span>
+                  <span v-else-if="isVerified" class="ml-2">已验证</span>
+                  <span v-else class="ml-2">验证DNS记录</span>
+                </button>
+              </div>
+              
+              <div v-if="verificationStatus" class="mt-2 text-sm" :class="verificationStatus.type === 'success' ? 'text-green-600' : 'text-red-600'">
+                {{ verificationStatus.message }}
               </div>
             </div>
             
-            <div class="mt-8 flex justify-end">
-              <a 
-                href="index.html" 
-                class="mr-4 px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition"
-              >
-                取消
-              </a>
+            <div class="pt-4">
               <button 
                 type="submit" 
-                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-300 flex items-center"
-                :disabled="isSubmitting"
+                :disabled="loading || (verificationCode && !isVerified)"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300 flex items-center justify-center"
               >
-                <i class="fas fa-paper-plane mr-2"></i>
-                {{ isSubmitting ? '提交中...' : '提交备案' }}
+                <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+                <span v-if="loading" class="ml-2">提交中...</span>
+                <span v-else-if="verificationCode && !isVerified" class="ml-2">请先完成DNS验证</span>
+                <span v-else class="ml-2">提交备案申请</span>
               </button>
             </div>
           </form>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-blue-500">
+            <div class="text-blue-500 text-3xl mb-4">
+              <i class="fas fa-info-circle"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">备案须知</h3>
+            <p class="text-gray-600">本平台为虚拟备案系统，提交的信息仅供娱乐使用，不具有法律效力。</p>
+          </div>
+          
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-green-500">
+            <div class="text-green-500 text-3xl mb-4">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">审核流程</h3>
+            <p class="text-gray-600">提交后系统会立即生成备案号，无需等待审核。</p>
+          </div>
+          
+          <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-purple-500">
+            <div class="text-purple-500 text-3xl mb-4">
+              <i class="fas fa-question-circle"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">注意事项</h3>
+            <p class="text-gray-600">请确保填写的信息真实有效，尽管本系统仅为娱乐使用。</p>
+          </div>
         </div>
       </div>
       
       <footer class="footer text-white py-8 mt-auto">
         <div class="container mx-auto px-4 text-center">
-          <p>虚拟ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
+          <p>梦ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
           <p class="text-gray-400 text-sm mt-2">本系统与政府机关无关，所有备案信息均为虚拟数据</p>
         </div>
       </footer>
@@ -140,50 +231,247 @@
   </div>
 
   <script>
-    const { createApp, ref } = Vue;
-    
     // 主应用
+    const { createApp, ref, onMounted, watch } = Vue;
+    
     const app = createApp({
       setup() {
-        const domain = ref('');
-        const title = ref('');
-        const company = ref('');
-        const isSubmitting = ref(false);
+        const form = ref({
+          domain: '',
+          title: '',
+          company: ''
+        });
         
-        const submitRecord = async () => {
-          isSubmitting.value = true;
+        const loading = ref(false);
+        const verificationCode = ref('');
+        const dnsInput = ref('');
+        const isVerifying = ref(false);
+        const isVerified = ref(false);
+        const verificationError = ref('');
+        const verificationStatus = ref(null);
+        
+        // 生成随机验证码
+        const generateVerificationCode = () => {
+          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          let code = '';
+          for (let i = 0; i < 32; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          verificationCode.value = code;
+        };
+        
+        // 验证DNS记录
+        const verifyDNS = async () => {
+          if (!form.value.domain) {
+            verificationError.value = '请先填写域名信息';
+            return;
+          }
+          
+          if (!verificationCode.value) {
+            verificationError.value = '验证码未生成';
+            return;
+          }
           
           try {
-            const response = await fetch('http://localhost:3000/api/record', {
+            isVerifying.value = true;
+            verificationError.value = '';
+            verificationStatus.value = null;
+            
+            // 调用后端代理API验证DNS TXT记录
+            const response = await fetch(`/api/dns-query?type=TXT&domain=_acme-challenge.${form.value.domain}`);
+            const data = await response.json();
+            
+            // 调试信息，帮助了解API返回的数据格式
+            console.log('DNS查询返回的原始数据:', data);
+            
+            if (!response.ok) {
+              throw new Error(data.error || 'DNS查询失败');
+            }
+            
+            // 检查返回的TXT记录中是否包含我们的验证码
+            // 根据实际API返回格式处理数据
+            console.log('DNS验证API返回的完整数据:', data); // 调试信息
+            console.log('期望的验证码:', verificationCode.value); // 调试信息
+            
+            // 即使状态码不是200，也要检查是否有有效的target数据
+            if (data.code == 200 || data.code === "200" || data.code === 0 || data.success === true || 
+                (data.code == 500 && data.target)) {
+              // 成功查询DNS记录或有返回数据
+              let found = false;
+              
+              // 根据实际API返回结构处理数据
+              let target = data.target || data.data || data.records || data.result || null;
+              console.log('提取的target数据:', target); // 调试信息
+              
+              if (target) {
+                // 如果target是字符串，直接比较；如果是数组，检查其中是否包含验证码
+                if (typeof target === 'string') {
+                  // TXT记录可能包含引号，需要去除，并去除首尾空白字符
+                  const cleanRecord = target.replace(/"/g, '').trim();
+                  const cleanVerificationCode = verificationCode.value.trim();
+                  console.log('字符串格式记录，清理后:', cleanRecord); // 调试信息
+                  console.log('期望验证码(已清理):', cleanVerificationCode); // 调试信息
+                  console.log('两者是否相等:', cleanRecord === cleanVerificationCode); // 调试信息
+                  if (cleanRecord === cleanVerificationCode) {
+                    found = true;
+                  }
+                } else if (Array.isArray(target)) {
+                  // 如果是数组，检查其中是否有匹配的记录
+                  console.log('数组格式记录:', target); // 调试信息
+                  const cleanVerificationCode = verificationCode.value.trim();
+                  for (const record of target) {
+                    // TXT记录可能包含引号，需要去除，并去除首尾空白字符
+                    const cleanRecord = (typeof record === 'string' ? record.replace(/"/g, '') : record).trim();
+                    console.log('数组元素，清理后:', cleanRecord); // 调试信息
+                    console.log('期望验证码(已清理):', cleanVerificationCode); // 调试信息
+                    console.log('两者是否相等:', cleanRecord === cleanVerificationCode); // 调试信息
+                    if (cleanRecord === cleanVerificationCode) {
+                      found = true;
+                      break;
+                    }
+                  }
+                } else if (typeof target === 'object') {
+                  // 处理对象形式的返回结果
+                  console.log('对象格式记录:', target); // 调试信息
+                  const cleanVerificationCode = verificationCode.value.trim();
+                  const values = Object.values(target);
+                  for (const record of values) {
+                    const cleanRecord = (typeof record === 'string' ? record.replace(/"/g, '') : record).trim();
+                    console.log('对象值，清理后:', cleanRecord); // 调试信息
+                    console.log('期望验证码(已清理):', cleanVerificationCode); // 调试信息
+                    console.log('两者是否相等:', cleanRecord === cleanVerificationCode); // 调试信息
+                    if (cleanRecord === cleanVerificationCode) {
+                      found = true;
+                      break;
+                    }
+                  }
+                }
+                
+                if (found) {
+                  isVerified.value = true;
+                  verificationStatus.value = {
+                    type: 'success',
+                    message: 'DNS验证成功！TXT记录已确认。'
+                  };
+                } else {
+                  // 显示实际查询到的记录，帮助用户调试
+                  let message = '未找到匹配的TXT记录，请确认您已正确添加记录并且DNS已生效（可能需要等待几分钟）。';
+                  if (typeof target === 'string') {
+                    message += ` 查询到的TXT记录: ${target}`;
+                  } else if (Array.isArray(target)) {
+                    message += ` 查询到的TXT记录: ${target.join(', ')}`;
+                  } else if (typeof target === 'object' && target !== null) {
+                    message += ` 查询到的TXT记录: ${JSON.stringify(target)}`;
+                  } else {
+                    message += ' 域名下未查询到任何TXT记录。';
+                  }
+                  
+                  verificationStatus.value = {
+                    type: 'error',
+                    message: message
+                  };
+                }
+              } else {
+                verificationStatus.value = {
+                  type: 'error',
+                  message: 'DNS查询成功但未返回记录内容'
+                };
+              }
+            } else {
+              verificationStatus.value = {
+                type: 'error',
+                message: `DNS查询失败: ${data.msg || data.message || data.error || data.reason || '未知错误'}`
+              };
+            }
+          } catch (error) {
+            console.error('验证错误:', error);
+            verificationStatus.value = {
+              type: 'error',
+              message: `验证过程中发生错误: ${error.message}`
+            };
+          } finally {
+            isVerifying.value = false;
+          }
+        };
+        
+        const submitRecord = async () => {
+          if (!form.value.domain || !form.value.title || !form.value.company) {
+            alert('请填写所有必填信息');
+            return;
+          }
+          
+          // 如果启用了验证但未验证通过，则不允许提交
+          if (verificationCode.value && !isVerified.value) {
+            alert('请先完成DNS验证再提交备案申请');
+            return;
+          }
+          
+          try {
+            loading.value = true;
+            const response = await fetch('/api/record', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({
-                domain: domain.value,
-                title: title.value,
-                company: company.value
-              })
+              body: JSON.stringify(form.value)
             });
             
-            const data = await response.json();
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
             
+            const data = await response.json();
             if (data.success) {
-              // 跳转到成功页面，并传递数据
-              localStorage.setItem('recordData', JSON.stringify(data));
-              window.location.href = 'success.html';
+              window.location.href = `success.html?record=${data.recordNumber}&domain=${data.domain}&title=${data.title}&company=${data.company}`;
             } else {
-              alert('备案提交失败，请重试');
+              alert('备案申请提交失败，请稍后再试');
             }
           } catch (error) {
-            console.error('备案提交错误:', error);
-            alert('发生错误，请稍后再试');
+            console.error('提交错误:', error);
+            alert('提交失败，请稍后再试');
           } finally {
-            isSubmitting.value = false;
+            loading.value = false;
           }
         };
         
-        return { domain, title, company, isSubmitting, submitRecord };
+        // 当域名改变时，重新生成验证码
+        const watchDomain = () => {
+          watch(
+            () => form.value.domain,
+            (newDomain, oldDomain) => {
+              if (newDomain) {
+                generateVerificationCode();
+                isVerified.value = false;
+                dnsInput.value = '';
+                verificationStatus.value = null;
+                verificationError.value = '';
+              } else {
+                verificationCode.value = '';
+                isVerified.value = false;
+                dnsInput.value = '';
+                verificationStatus.value = null;
+                verificationError.value = '';
+              }
+            }
+          );
+        };
+        
+        onMounted(() => {
+          watchDomain();
+        });
+        
+        return { 
+          form,
+          loading,
+          verificationCode,
+          dnsInput,
+          isVerifying,
+          isVerified,
+          verificationError,
+          verificationStatus,
+          submitRecord,
+          verifyDNS
+        };
       }
     });
     

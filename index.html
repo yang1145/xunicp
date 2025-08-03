@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>虚拟ICP备案平台</title>
+  <title>梦ICP备案平台</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -44,6 +44,29 @@
     .header {
       background-color: rgba(29, 78, 216, 0.7);
     }
+    
+    /* 移动端不显示视频背景 */
+    @media (max-width: 768px) {
+      .video-background {
+        display: none;
+      }
+      
+      .content-overlay {
+        background-color: #f3f4f6;
+      }
+      
+      .panel {
+        background-color: rgba(255, 255, 255, 1);
+      }
+      
+      .header {
+        background-color: rgba(29, 78, 216, 1);
+      }
+      
+      .footer {
+        background-color: rgba(31, 41, 55, 1);
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -58,7 +81,7 @@
         <div class="container mx-auto px-4">
           <h1 class="text-3xl font-bold flex items-center">
             <i class="fas fa-globe-asia mr-3"></i>
-            虚拟ICP备案平台
+            梦ICP备案平台
           </h1>
           <p class="text-blue-200 mt-1">仅供娱乐使用，非官方备案系统</p>
         </div>
@@ -69,7 +92,7 @@
           <div class="flex flex-col md:flex-row justify-between items-center">
             <div class="mb-4 md:mb-0">
               <h2 class="text-2xl font-bold text-gray-800">网站备案查询</h2>
-              <p class="text-gray-600">输入域名或备案号查询备案信息</p>
+              <p class="text-gray-600">输入域名或备案号查询</p>
             </div>
             
             <a 
@@ -85,15 +108,18 @@
             <div class="flex">
               <input 
                 v-model="searchQuery" 
+                @keyup.enter="searchRecords"
                 type="text" 
                 placeholder="输入域名或备案号查询" 
                 class="w-full py-3 px-4 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent"
               >
               <button 
                 @click="searchRecords" 
-                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-r-lg font-medium transition duration-300"
+                :disabled="loading"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-r-lg font-medium transition duration-300 flex items-center"
               >
-                <i class="fas fa-search"></i>
+                <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-search'"></i>
+                <span v-if="loading" class="ml-2">查询中...</span>
               </button>
             </div>
           </div>
@@ -118,7 +144,7 @@
                 
                 <div class="mt-4 md:mt-0 text-right">
                   <div class="text-sm text-gray-500">备案号</div>
-                  <div class="text-lg font-mono text-blue-800">{{ record.record_number }}</div>
+                  <div class="text-lg font-mono text-blue-800">梦ICP - {{ record.record_number }}</div>
                 </div>
               </div>
               
@@ -137,7 +163,7 @@
         </div>
         
         <!-- 备案展示 -->
-        <div v-if="searchResults.length === 0 && searchQuery" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div v-if="searchResults.length === 0 && !loading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="panel rounded-lg shadow-lg p-6 border-t-4 border-blue-500">
             <div class="text-blue-500 text-3xl mb-4">
               <i class="fas fa-shield-alt"></i>
@@ -172,8 +198,22 @@
       
       <footer class="footer text-white py-8 mt-auto">
         <div class="container mx-auto px-4 text-center">
-          <p>虚拟ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
+          <p>梦ICP备案平台 &copy; 2025 - 仅供娱乐使用</p>
           <p class="text-gray-400 text-sm mt-2">本系统与政府机关无关，所有备案信息均为虚拟数据</p>
+          
+          <!-- 添加备案信息 -->
+          <div class="mt-4 text-sm space-y-1">
+            <p>
+              <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" class="text-gray-400 hover:text-white transition">
+                冀ICP备2025119723号-1
+              </a>
+            </p>
+            <p>
+              <a href="https://beian.mps.gov.cn/#/query/webSearch?code=13010202004364" target="_blank" rel="noopener" class="text-gray-400 hover:text-white transition">
+                冀公网安备13010202004364号
+              </a>
+            </p>
+          </div>
         </div>
       </footer>
     </div>
@@ -181,12 +221,16 @@
 
   <script>
     // 主应用
+    const { createApp, ref } = Vue;
+    
     const app = createApp({
       setup() {
         const searchQuery = ref('');
         const searchResults = ref([]);
+        const loading = ref(false);
         
         const formatDate = (dateString) => {
+          if (!dateString) return '';
           const date = new Date(dateString);
           return date.toLocaleDateString('zh-CN', {
             year: 'numeric',
@@ -196,21 +240,33 @@
         };
         
         const searchRecords = async () => {
-          if (!searchQuery.value.trim()) return;
+          if (!searchQuery.value.trim()) {
+            alert('请输入要查询的域名或备案号');
+            return;
+          }
           
           try {
-            const response = await fetch(`http://localhost:3000/api/record?q=${encodeURIComponent(searchQuery.value)}`);
+            loading.value = true;
+            const response = await fetch(`/api/record?q=${encodeURIComponent(searchQuery.value)}`);
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             searchResults.value = data;
           } catch (error) {
             console.error('查询错误:', error);
             alert('查询失败，请稍后再试');
+          } finally {
+            loading.value = false;
           }
         };
         
         return { 
           searchQuery, 
           searchResults, 
+          loading,
           formatDate,
           searchRecords
         };
