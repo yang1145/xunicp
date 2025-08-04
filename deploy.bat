@@ -31,4 +31,6 @@ echo 请确保已配置.env文件，包含数据库连接信息
 echo 使用 "npm start" 启动服务器
 echo.
 echo 如需打包项目，请使用 "npm run pack" 命令
+echo 在Windows系统上，该命令会使用PowerShell创建zip文件
+echo 在Unix/Linux/Mac系统上，该命令会使用zip命令
 pause

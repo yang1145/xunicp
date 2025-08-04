@@ -61,6 +61,8 @@ npm run pack
 
 这将创建一个xunicp-release.zip文件，其中包含所有必要的文件，排除了node_modules、日志文件、环境变量文件等不需要打包的内容。
 
+在Windows系统上，该命令会使用PowerShell的压缩功能，而在Unix/Linux/Mac系统上会使用zip命令。
+
 ### 环境变量配置
 
 - `DB_HOST` - 数据库主机地址 (默认: localhost)
@@ -98,15 +100,3 @@ npm run pack
    ```
 
 3. 配置 SSL 证书以启用 HTTPS (推荐使用 Let's Encrypt)
-
-## API 接口
-
-### 提交备案
-- URL: `/api/record`
-- 方法: POST
-- 参数:
-  - `domain` - 网站域名
-  - `title` - 网站名称
-  - `company` - 公司名称
-
-### 查询备案
